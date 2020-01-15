@@ -11,24 +11,23 @@ CC = /usr/local/cross/bin/bin/i686-elf-gcc
 GDB = /usr/local/cross/bin/bin/i686-elf-gdb
 CFLAGS = -g -ffreestanding -c 
 
-os-image.bin: boot/bootsect.bin kernel.bin
-	cat $^ > os-image.bin
+os-image.bin:  boot/bootsect.bin kernel/kernel.bin
+	cat $^ > $@
 
 # Notice how dependencies are built as needed
-kernel.bin: boot/kernel_entry.o ${OBJ}
-	i686-elf-ld -o $@ -Ttext 0x1000 $^ --oformat binary
 
 %.o: %.c ${HEADERS}
 	${CC} ${CFLAGS} $< -o $@
 
-%.o: %.asm
-	nasm $< -f elf -o $@
-%.bin: %.asm 
-	nasm $< -f bin -o $@
+boot/bootsect.bin: 
+	cd boot && make
+
+kernel/kernel.bin:
+	cd kernel && make
 
 run: os-image.bin
 	qemu-system-i386 -nographic -fda $<
 
 clean:
-	rm -rf *.bin *.o *.dis
-	rm -rf kernel/*.o boot/*,bin drviers/*.o boot/*,o
+	rm -rf *.o *.dis
+	rm -rf kernel/*.o kernel/*.bin  boot/*.bin drivers/*.o boot/*.o

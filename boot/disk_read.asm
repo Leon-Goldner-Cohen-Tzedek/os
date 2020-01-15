@@ -1,4 +1,4 @@
-; load dh sectors from drive dl inot ES:BX
+; load dh sectors from drive dl into ES:BX
 %ifndef DISK_READ_ASM
 	%define DISK_READ_ASM
 		disk_load:

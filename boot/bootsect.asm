@@ -15,14 +15,15 @@ KERNEL_OFFSET equ 0x1000 ; The same one we used when linking the kernel
 
 ; nasm is dumb and can't include if the file being assembled is in a different directory than
 ; where it was called from
+%include "print_hex.asm"
+%include "print.asm"
+%include "switch_to_32.asm"
+%include "GDT.asm"
+%include "disk_read.asm"
+%include "print_32.asm"
 
-%include "boot/kernel_entry.asm"
-%include "boot/print.asm"
-%include "boot/switch_to_32.asm"
-%include "boot/print_32.asm"
-%include "boot/GDT.asm"
-%include "boot/print_hex.asm"
-%include "boot/disk_read.asm"
+
+
 
 [bits 16]
 load_kernel:
