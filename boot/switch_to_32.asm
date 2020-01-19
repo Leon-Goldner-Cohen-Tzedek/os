@@ -19,7 +19,6 @@
 			mov gs, ax
 			
 			mov ebp, 0x90000 ; 6. update the stack right at the top of the free space
-			mov esp, ebp
-			
-			call BEGIN_PM ; 7. call a well known labe with useful code
+			mov esp, ebp	
+			call BEGIN_PM ; 7. call a well known label with useful code
 %endif

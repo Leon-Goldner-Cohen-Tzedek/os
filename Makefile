@@ -16,18 +16,22 @@ os-image.bin:  boot/bootsect.bin kernel/kernel.bin
 
 # Notice how dependencies are built as needed
 
-%.o: %.c ${HEADERS}
-	${CC} ${CFLAGS} $< -o $@
-
 boot/bootsect.bin: 
 	cd boot && make
 
 kernel/kernel.bin:
 	cd kernel && make
 
-run: os-image.bin
-	qemu-system-i386 -nographic -fda $<
+kernel/kernel.elf:
+	cd kernel && make $@
 
+run: os-image.bin
+	qemu-system-i386 -fda os-image.bin
+
+debug: os-image.bin kernel/kernel.elf
+	qemu-system-i386 -s -fda os-image.bin &
+	gdb -ex "target remote localhost:1234" -ex "symbol-file kernel/kernel.elf"
+		
 clean:
-	rm -rf *.o *.dis
+	rm -rf *.o *.dis *.bin
 	rm -rf kernel/*.o kernel/*.bin  boot/*.bin drivers/*.o boot/*.o
