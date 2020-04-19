@@ -3,11 +3,15 @@
 void main()
 {
 	clear_screen();
-	kprint_at("XXXXXXXXXXX", 7, 3);
-	kprint_at("This text spans multiple lines", 75, 10);
-	kprint_at("There is a \nline\nbreak", 0, 15);
-	kprint_at("There is another\nline\nbreak", 0, 20);
-	kprint_at("What happens when we run out of space?", 45, 24);
+	for (int i = 0; i < 24; i++)
+	{
+		char str[255];
+		int_to_ascii(i, str);	
+		kprint_at(str, 0, i);
+	}
+	
+	kprint_at("This text forces the kernel to scroll. Row 0 will disappear. ", 60, 24);
+	kprint("And with this text, the kernel will scroll again, and row 1 will disappear too!");
 	
 }
 
