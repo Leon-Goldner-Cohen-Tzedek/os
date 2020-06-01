@@ -1,6 +1,6 @@
 #include "screen.h"
-#include "ports.c"
-#include "util.c"
+#include "../cpu/ports.h"
+#include "../libc/mem.h"
 
 //declaration of private functions
 int get_cursor_offset();
@@ -43,12 +43,20 @@ void kprint(char *message)
 	kprint_at(message, -1, -1);
 }
 
+void kprint_backspace()
+{
+	int offset = get_cursor_offset() - 2;
+	int row = get_offset_row(offset);
+	int col = get_offset_col(offset);
+	print_char(0x08, col, row, WHITE_ON_BLACK);
+}
+
 // Private kernel functions 
 // these DIRECTLY access memory
 
 int print_char(char c, int col, int row, char attr)
 {
-	unsigned char *vidmem = (unsigned char*) VIDEO_ADDRESS;
+	u8*	vidmem = (u8*) VIDEO_ADDRESS;
 	if (!attr) attr = WHITE_ON_BLACK;
 	
 	// Error control print red E if the coords aren't right
@@ -68,7 +76,11 @@ int print_char(char c, int col, int row, char attr)
 		row = get_offset_row(offset);
 		offset = get_offset(0, row + 1);
 	}
-		
+	else if (c == 0x08)
+	{
+		vidmem[offset] = ' ';
+		vidmem[offset] = attr;
+	}	
 	else
 	{
 		vidmem[offset] = c;
@@ -82,12 +94,13 @@ int print_char(char c, int col, int row, char attr)
 		int i;
 		for (i = 1; i < MAX_ROWS; i++)
 		{
-			memory_copy(get_offset(0, i) + VIDEO_ADDRESS, get_offset(0, i-1) + VIDEO_ADDRESS, MAX_COLS * 2);
+			memory_copy((u8*)(get_offset(0, i) + VIDEO_ADDRESS),
+						(u8*)(get_offset(0, i-1) + VIDEO_ADDRESS),
+						MAX_COLS * 2);
 		}
-		/*blank last line maker*/
-		char* last_line = get_offset(0, MAX_ROWS-1)  + VIDEO_ADDRESS;
-		for (i = 0; i < MAX_COLS * 2; i++) last_line[i] = 0;
 		
+		char* last_line = (char*) (get_offset(0, MAX_ROWS - 1) + (u8*) VIDEO_ADDRESS);
+		for (i = 0; i < MAX_COLS * 2; i++) last_line[i] = 0;
 		offset -= 2 * MAX_COLS;
 	}
 	
@@ -112,16 +125,16 @@ void set_cursor_offset(int offset)
 {// similar to get_cursor_offset, but instead reading, we write data
 	offset /= 2;	
 	byte_out(REG_SCREEN_CTL, 14);
-	byte_out(REG_SCREEN_DATA, (unsigned char)(offset << 8));
+	byte_out(REG_SCREEN_DATA, (u8)(offset >> 8));
 	byte_out(REG_SCREEN_CTL, 15);
-	byte_out(REG_SCREEN_CTL, (unsigned char)(offset & 0xff));
+	byte_out(REG_SCREEN_DATA, (u8)(offset & 0xff));
 }
 
 void clear_screen()
 {
 	int screen_size = MAX_COLS * MAX_ROWS;
 	int i;
-	char *screen = VIDEO_ADDRESS;
+	u8  *screen = (u8*) VIDEO_ADDRESS;
 	
 	for (i = 0; i < screen_size; i++)
 	{

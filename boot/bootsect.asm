@@ -15,12 +15,13 @@ KERNEL_OFFSET equ 0x1000 ; The same one we used when linking the kernel
     jmp $ ; Never executed
 
 ; THE ORDER OF THE INCLUDES MATTERS STILL, EVEN WITH INCLUDE GUARDS. I DON'T LIKE NASM
-%include "print.asm"			; THIS
-%include "print_hex.asm"		; ORDER
-%include "disk_read.asm"		; WORKS
-%include "GDT.asm"				; DON'T
-%include "print_32.asm"			; CHANGE
-%include "switch_to_32.asm"		; IT
+; boot/ because make builds from one directory up and nasm is still a little bitch
+%include "boot/print.asm"			; THIS
+%include "boot/print_hex.asm"		; ORDER
+%include "boot/disk_read.asm"		; WORKS
+%include "boot/GDT.asm"				; DON'T
+%include "boot/print_32.asm"			; CHANGE
+%include "boot/switch_to_32.asm"		; IT
 
 
 

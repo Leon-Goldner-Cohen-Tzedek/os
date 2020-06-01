@@ -1,17 +1,44 @@
-#include "drivers/screen.c"
-
+#include "../cpu/isr.h"
+#include "../drivers/screen.h"
+#include "kernel.h"
+#include "../libc/strings.h"
+#include "../libc/mem.h"
 void main()
 {
-	clear_screen();
-	for (int i = 0; i < 24; i++)
-	{
-		char str[255];
-		int_to_ascii(i, str);	
-		kprint_at(str, 0, i);
-	}
-	
-	kprint_at("This text forces the kernel to scroll. Row 0 will disappear. ", 60, 24);
-	kprint("And with this text, the kernel will scroll again, and row 1 will disappear too!");
-	
+	isr_install();
+	irq_install();
+	kprint("welcome to LeonOS: \"basically just copied from a tutorial\"\n^ ");
 }
 
+void user_input(char* input)
+{
+	if (strcmp(input, "END") == 0)
+	{
+		kprint("stopping the CPU\n");
+		asm volatile("hlt");
+	}
+	else if	(strcmp(input, "PAGE") == 0)
+	{
+		u32 phys_addr;
+		u32 page = kmalloc(1000, 1, &phys_addr);
+		char page_str[16] = "";
+		hex_to_ascii(page, page_str);
+		char phys_str[16] = "";
+		hex_to_ascii(phys_addr, phys_str);
+		kprint("Page: ");
+		kprint(page_str);
+		kprint(", physical address: ");
+		kprint(phys_str);
+	}
+	else if (strcmp(input, "CLEAR") == 0)
+	{
+		clear_screen();
+	}
+	else if (strcmp(input, "") != 0)
+	{
+		kprint("that is not a valid command");
+	}
+	
+	kprint("\n^ ");
+	
+}
