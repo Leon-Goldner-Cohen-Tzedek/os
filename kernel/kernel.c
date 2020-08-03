@@ -3,8 +3,10 @@
 #include "kernel.h"
 #include "../libc/strings.h"
 #include "../libc/mem.h"
+#include "../drivers/disk.h"
 void main()
 {
+	disk_init();
 	isr_install();
 	irq_install();
 	kprint("welcome to LeonOS: \"basically just copied from a tutorial\"\n^ ");

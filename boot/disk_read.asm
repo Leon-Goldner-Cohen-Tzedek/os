@@ -4,10 +4,10 @@
 		disk_load:
 			pusha
 			; reading from the disk requires setting specific values in all registers
-			; so overwrite our input paramters from dx to the stack
+			; so overwrite our input parameters from dx to the stack
 			push dx 
 			
-			mov ah, 0x02 ; ah is a int 0x13 functio 0x02 = read
+			mov ah, 0x02 ; ah is a int 0x13 function 0x02 = read
 			mov al, dh ; al is the number of sectors to read (0x01 to 0x80)
 			mov cl, 0x02 ; cl is sector 0x01 to 0x11
 			
@@ -21,7 +21,7 @@
 			jc disk_error ; if error (stored in the carry bit)
 			
 			pop dx
-			cmp al, dh ; BIOS also sets al to he # of sectors read
+			cmp al, dh ; BIOS also sets al to dh # of sectors read
 			jne sectors_error
 			popa 
 			ret
