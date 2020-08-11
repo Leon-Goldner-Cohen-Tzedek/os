@@ -23,7 +23,6 @@
 #define WRITE_DELETED_DATA 9
 #define READ_ID 10 // generates irq6
 #define READ_DELETED_DATA 12     
-#define READ_DELETED_DATA 13
 #define DUMPREG 14
 #define SEEK 15 //seek both heads to track X
 #define VERSION 16 //used during initialization once
@@ -39,4 +38,12 @@
 #define MT_BIT 0x80
 #define MF_BIT 0x40
 int disk_init();
+int kread(int blocks, int count, int track, int start_sector);
+void kwrite(int sector, int track, int head, int data, int count);
+void configure(int seek, int fifo, int polling, int threshold);
+void recalibrate();
+void reset();
+void motor_on();
+void motor_off();
+void seek();
 #endif
