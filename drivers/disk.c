@@ -1,6 +1,7 @@
 #include "disk.h"
 #include "screen.h"
 #include "../libc/function.h"
+#include "../libc/strings.h"
 #include "../cpu/types.h"
 #include "../cpu/ports.h"
 #include "../cpu/isr.h"
@@ -19,24 +20,23 @@ int disk_init()
 	register_interrupt_handler(IRQ6, disk_callback);
 
 	//check the version, if the result byte is not 0x90, just abort
-	byte_out(DATA_FIFO, VERSION);
-	if (byte_in(DATA_FIFO) != 0x90)// this is the lowest common denominator controller, the osdev wiki says so, so it *must* be true . . .
+	kprint("checking floppy disk version\n");
+	fdc_byte_out(DATA_FIFO, VERSION);
+	if (fdc_byte_in(DATA_FIFO) != (unsigned char)0x90)// this is the lowest common denominator controller, the osdev wiki says so, so it *must* be true . . .
 	{
 		kprint("floppy version incorrect, aborting disk subsystem initialization\n");
-		return 1;
 	}
 	//sets the configuration for the fdc, implied seek on, fifo off, drive polling off, threshold for polling?? 15 bytes	
 	configure(1, 0, 0, 15);
 	
 	//lock the config so that it stays persistent through resets. i *think* this works, but i am really not sure. . . 	
-	byte_out(DATA_FIFO, LOCK & MT_BIT);
-	if (byte_in(DATA_FIFO) != (LOCK & MT_BIT << 4))
+	if (fdc_byte_in(DATA_FIFO) != (LOCK & MT_BIT << 4))
 	{
 		kprint("failed to lock configuration, aborting disk subsystem initialization\n");
 		return 1;
 	}
-	
 	recalibrate();
+
 	reset();
 
 	kprint("disk subsystem initialized\n");
@@ -46,33 +46,76 @@ int disk_init()
 }
 void recalibrate()
 {
+	kprint("recalibrating controller . . .\n");
 	//drive recalibration
-	byte_out(DATA_FIFO, RECALIBRATE);
-	byte_out(DATA_FIFO, 0);//drives being recalibrated
+	fdc_byte_out(DATA_FIFO, RECALIBRATE);
+	fdc_byte_out(DATA_FIFO, 0);//drives being recalibrated
 	byte_out(DATA_FIFO, 1);
 	byte_out(DATA_FIFO, 2);
 	byte_out(DATA_FIFO, 3);
 }
 void reset()
 {
+	kprint("resetting controller. . .\n");
 	//reset the controller 
-	byte_out(DATARATE_SELECT_REGISTER, 0 | MT_BIT);
+	fdc_byte_out(DATARATE_SELECT_REGISTER, 0);
 }
 void configure(int seek, int fifo, int drive_polling, int threshold) 
 {
+	kprint("configuring controller. . .\n");
 	/* recommended settings are: implied seek: on, fifo: off, drive polling: off, threshold (threshold is how many bytes are read 
-	before an interrupt occurs: 15*/
-	unsigned config_bit = seek << 6 | fifo << 5 | drive_polling << 4 | threshold;
+	before an interrupt occurs): 15*/
+	unsigned char config_bit = seek << 6 | fifo << 5 | drive_polling << 4 | threshold;
 	//this part should set up the proper configuration			
-	byte_out(DIGITAL_OUTPUT_REGISTER, CONFIGURE);//configure command
-	byte_out(DIGITAL_OUTPUT_REGISTER, 0); // 0 for some reason
+	fdc_byte_out(DIGITAL_OUTPUT_REGISTER, CONFIGURE);//configure command
+	fdc_byte_out(DIGITAL_OUTPUT_REGISTER, 0); // 0 for some reason
 	byte_out(DIGITAL_OUTPUT_REGISTER, config_bit); 
 	byte_out(DIGITAL_OUTPUT_REGISTER, 0);
 }
+int fdc_byte_out(unsigned short port, unsigned char byte)
+{
+	long timeout = FDC_TIMEOUT;
+	while (timeout != 0)
+	{
+		unsigned char  msr = byte_in(MAIN_STATUS_REGISTER);
+		if (msr == 0x80 || 0x90)
+		{
+			byte_out(port, byte);
+			return 0;
+		}
+		timeout--;
+	}
+	kprint("Floppy Disk Controller Error: Main Status Register Time out\n");
+	return 1;
+}
+
+unsigned char fdc_byte_in(unsigned short port)
+{
+	long timeout = FDC_TIMEOUT;
+	while (timeout != 0)
+	{
+		unsigned char msr = byte_in(MAIN_STATUS_REGISTER);
+		if (msr == 0x80 || 0x90)
+		{
+			return byte_in(port);
+		}
+		timeout--;
+	}
+	kprint("Floppy Disk Controller Error: Main Status Register Time out\n");
+	return (unsigned char)1;
+}
 /*
 void motor_on()
-void motor_off()
+{
+	//simply turns on the motor for now, figuring out delay systems later (mihgt not be necessary due to emulator
+	byte_out(DIGITAL_OUTPUT_REGISTER, 0x10);//0x10 is the value for turning on motor a
+} 
 void seek()
+{
+	
+}
+void motor_off()
+
 	
 int kread(u32 blocks, u32 count, int track, int start_sector)
 {

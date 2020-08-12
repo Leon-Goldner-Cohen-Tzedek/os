@@ -37,7 +37,11 @@
 //option bits 
 #define MT_BIT 0x80
 #define MF_BIT 0x40
+#define FDC_TIMEOUT 256 
+
 int disk_init();
+unsigned char fdc_byte_in(unsigned short port);
+int fdc_byte_out(unsigned short port, unsigned char byte);
 int kread(int blocks, int count, int track, int start_sector);
 void kwrite(int sector, int track, int head, int data, int count);
 void configure(int seek, int fifo, int polling, int threshold);
