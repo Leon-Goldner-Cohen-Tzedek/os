@@ -3,23 +3,36 @@
 #include "../libc/mem.c"
 #include "../libc/bits.h"
 
-int dma_init()
+int dma_init(unsigned char mode, unsigned char increment, unsigned char cycle, unsigned char transfer, int channel, struct dma_profile profile)
 {
-	//this dma init is just for the floppy disk right now
-	byte_out(SINGLE_MASK_8, 0x06);
-	byte_out(CLEAR_FLIPFLOP_8, 0xff);	
-	byte_out(0x04, 0);
-	byte_out(0x04, 0x10);
-	byte_out(CLEAR_FLIPFLOP_8, 0xff);
-	byte_out(0x05, 0xff);
-	byte_out(0x05, 0x23);
-	byte_out(CHNL_2, 0);
-	byte_out(SINGLE_MASK_8, 0x02);
-	return 0;
+	set_channel(channel, profile);
+	enable_channel(profile);
+	set_control_byte_mask(mode, increment, cycle, transfer, channel, profile);
+	set_control_byte(profile);
+	allocate_buffer(profile);		
+}
+
+void allocate_buffer(struct dma_profile profile)
+{
+	
+	profile.buffer_base_addr = kmalloc(DMA_BUFFER, 1, profile.buffer_phys_addr);
+
+}		
+
+void set_control_byte_mask(unsigned char mode, unsigned char increment, unsigned char cycle, unsigned char transfer, struct dma_profile profile)
+{
+	profile.control_byte_mask = (mode + increment + cycle + transfer);
+	profile.control_byte_mask += profile.control_byte_mask;
+}
+
+void set_control_byte(struct dma_profile profile)
+{
+	profile.control_byte |= profile.control_byte_mask; 
+	byte_out(profile.mode_register, profile.control_byte);
 }
 
 void set_channel(int channel, struct dma_profile profile)
-{
+{ 
 	if (channel > 7)
 	{
 		kprint("DMA error: invalid channel\n");	
@@ -29,6 +42,26 @@ void set_channel(int channel, struct dma_profile profile)
 		profile.chanel = channel;
 	}
 	set_ports(channel, profile);
+}
+
+void enable_channel(struct dma_profile profile)
+{
+	unsigned char mask = 0;
+	mask = profile.mask_register;
+	byte_out(profile.mask_register, mask);
+}
+
+void disable_channel(struct dma_profile profile)
+{
+	unsigned char mask = 0;
+	mask = profile.mask_register;
+	mask |= 4;
+	byte_out(profile.mask_register, mask);
+}
+
+void clear_fliplop(struct dma_profile profile)
+{
+	byte_out(profile.clear_register, 0x0000);
 }
 
 void set_ports(int channel, struct dma_profile profile)

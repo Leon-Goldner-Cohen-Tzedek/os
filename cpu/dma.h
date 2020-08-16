@@ -45,14 +45,14 @@
 
 struct dma_profile
 {
-	unsigned char control_byte;
-	unsigned char control_byte_mask;
-	unsigned char address_port;
-	unsigned char page_port;
-	unsigned char mask_register;
-	unsigned char clear_register;
-	unsigned char mode_register;
-	unsigned char channel;
+	unsigned char control_byte = 0;
+	unsigned char control_byte_mask = 0;
+	unsigned char address_port = 0;
+	unsigned char page_port = 0;
+	unsigned char mask_register = 0;
+	unsigned char clear_register = 0;
+	unsigned char mode_register = 0;
+	unsigned char channel = 0;
 }
 
 int dma_init(struct dma_profile profile);
