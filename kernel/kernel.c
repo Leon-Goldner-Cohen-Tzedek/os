@@ -1,4 +1,5 @@
 #include "../cpu/isr.h"
+#include "../cpu/dma.h"
 #include "../drivers/screen.h"
 #include "kernel.h"
 #include "../libc/strings.h"
@@ -6,9 +7,11 @@
 #include "../drivers/disk.h"
 void main()
 {
-	disk_init();
+	
 	isr_install();
 	irq_install();
+	dma_init();
+	disk_init();
 	kprint("welcome to LeonOS: \"basically just copied from a tutorial\"\n^ ");
 }
 

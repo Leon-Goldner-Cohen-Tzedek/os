@@ -37,7 +37,7 @@
 //option bits 
 #define MT_BIT 0x80
 #define MF_BIT 0x40
-#define FDC_TIMEOUT 256 
+#define FDC_TIMEOUT 128 
 
 int disk_init();
 unsigned char fdc_byte_in(unsigned short port);
