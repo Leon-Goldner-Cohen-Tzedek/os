@@ -8,16 +8,29 @@ int dma_init(unsigned char mode, unsigned char increment, unsigned char cycle, u
 	set_channel(channel, profile);
 	enable_channel(profile);
 	set_control_byte_mask(mode, increment, cycle, transfer, channel, profile);
+	set_transfer_length(transfer_length, profile);
 	set_control_byte(profile);
 	allocate_buffer(profile);		
 }
 
 void allocate_buffer(struct dma_profile profile)
 {
-	
 	profile.buffer_base_addr = kmalloc(DMA_BUFFER, 1, profile.buffer_phys_addr);
-
 }		
+
+void set_transfer_length(unsigned short length, struct dma_profile profile)
+{
+	profile.transfer_length = length;
+	byte_out(profile.count_port, lobyte(length-1);
+	byte_out(profile.count_port, hibyte(length-1);
+}
+
+void set_buffer_info(struct dma_profile profile)
+{
+	byte_out(profile.page_port, profile.buffer_base_addr);
+	byte_out(profile.address_port, profile.buffer_phys_addr & 0xff);
+	byte_out(profile.address_port, profile.buffer_phys_addr >> 8);
+}	
 
 void set_control_byte_mask(unsigned char mode, unsigned char increment, unsigned char cycle, unsigned char transfer, struct dma_profile profile)
 {
