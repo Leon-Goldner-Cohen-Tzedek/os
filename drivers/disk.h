@@ -37,17 +37,19 @@
 //option bits 
 #define MT_BIT 0x80
 #define MF_BIT 0x40
-#define FDC_TIMEOUT 128 
 
+//time out for various io operations
+#define FDC_TIMEOUT 128 
+#define SECTORS_PER_TRACK 18 // i am "hard coding" standard floppy thingj
 int disk_init();
 unsigned char fdc_byte_in(unsigned short port);
 int fdc_byte_out(unsigned short port, unsigned char byte);
-int kread(int blocks, int count, int track, int start_sector);
+void kread_write(int block, unsigned long number_sectors, int read );
 void kwrite(int sector, int track, int head, int data, int count);
 void configure(int seek, int fifo, int polling, int threshold);
 void recalibrate();
 void reset();
 void motor_on();
 void motor_off();
-void seek();
+void seek(int track);
 #endif

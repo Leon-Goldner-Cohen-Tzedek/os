@@ -10,7 +10,6 @@ void main()
 	
 	isr_install();
 	irq_install();
-	dma_init();
 	disk_init();
 	kprint("welcome to LeonOS: \"basically just copied from a tutorial\"\n^ ");
 }

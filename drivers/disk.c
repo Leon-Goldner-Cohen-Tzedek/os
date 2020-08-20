@@ -5,6 +5,7 @@
 #include "../cpu/ports.h"
 #include "../cpu/isr.h"
 #include "../cpu/idt.h"
+#include "../cpu/dma.h"
 
 // Obviously you'd have this return the data, start drivers or something.
 static void disk_callback(registers_t regs)
@@ -37,12 +38,10 @@ int disk_init()
 		return 1;
 	}
 	
-	recalibrate();
-
 	reset();
 
-	kprint("disk subsystem initialized\n");
 	
+	kprint("disk subsystem initialized\n");
 	return 0;
 }
 
@@ -57,7 +56,15 @@ void reset()
 {
 	kprint("resetting controller. . .\n");
 	//reset the controller 
-	fdc_byte_out(DATARATE_SELECT_REGISTER, 0);
+	byte_out(DIGITAL_OUTPUT_REGISTER, 0);
+	byte_out(DATARATE_SELECT_REGISTER, 0);
+	fdc_byte_out(DATA_FIFO, SPECIFY);
+	fdc_byte_out(DATA_FIFO, 0xdf); //SRT = 3ms, HUT = 240ms
+	fdc_byte_out(DATA_FIFO, 0x02); //HLT = 16ms, ND = 0
+	
+	seek(1);
+	recalibrate();
+
 }
 void configure(int seek, int fifo, int drive_polling, int threshold) 
 {
@@ -107,50 +114,52 @@ unsigned char fdc_byte_in(unsigned short port)
 
 void motor_on()
 {
-	//simply turns on the motor for now, figuring out delay systems later (mihgt not be necessary due to emulator
+	//simply turns on the motor for now, figuring out delay systems later (might not be necessary due to emulator
 	fdc_byte_out(DIGITAL_OUTPUT_REGISTER, 0x10);//0x10 is the value for turning on motor a
 } 
-/*
-int kread(int blocks, int count, int track, int start_sector)
+
+void seek(int track)
 {
-	int cylinder = LBA / (HPC * SPT)
-
-	int HEAD = (LBA % (HPC * SPT)) / SPT
-
-	int SECT = (LBA % (HPC * SPT)) % SPT + 1
-
-	int LBA = ((cylinder * HPC + HEAD ) * SPT ) + SECT - 1
-	//turn on drive motor
+//bare minimum, no checks or anything . . .
+	fdc_byte_out(DATA_FIFO, SEEK);
+	fdc_byte_out(DATA_FIFO, 0);	
+	fdc_byte_out(DATA_FIFO, track);
+}
+void lba_to_hst(int block, int *head, int *track, int *sector)
+{
+   *head = (block % (SECTORS_PER_TRACK * /*heads (always 2)*/2)) / (SECTORS_PER_TRACK);
+   *track = block / (SECTORS_PER_TRACK * /*heads*/ 2);
+   *sector = block % SECTORS_PER_TRACK + 1;
+}
+void kread_write(int block, unsigned long number_sectors, int read)
+{
+	int head, track, sector, copy_count = 0;
+	
+	lba_to_hst(block, &head, &track, &sector);
+	
+	struct dma_profile dma_profile;	
+		//turn on drive motor
 	motor_on();
-		// byte_out command to the DIGITAL_OUTPUT_REGISTER
-	//wait a bit until the motor is up to speed
-	//issue the command byte + parameter bytes to the fifo command io port
-	fdc_byte_out(DATA_FIFO, READ_DATA);
-	fdc_byte_out(DATA_FIFO, (head << 2) | drive);
-	fdc_byte_out(DATA_FIFO, cylinder);
-	fdc_byte_out(DATA_FIFO, head);
-	fdc_byte_out(DATA_FIFO, start_sector); //starting sector
-	fdc_byte_out(DATA_FIFO, 2);//something about sector sizes (all use 512bytes, so 2 is the magic number
-	fdc_byte_out(DATA_FIFO, last_sector); //not sure about this one, the end of track, last sector of the track
-	fdc_byte_out(DATA_FIFO, 0x1b); //default gap between sectors
-	fdc_byte_out(DATA_FIFO, 0xff); //something to do with sector sizes 
-	//exchange data with the drive / seek the drive heads "execution phase" on the FIFO port 	
-//get irq 6 at the end of the execution phase but only if the command as an execution phase 
-	//read any "result bytes" produced by the command on the fifo port
-	UNUSED(blocks);
-	UNUSED(count);
-	UNUSED(track);
-	UNUSED(start_sector);
-	return 0;
+
+	for (int tries = 0; tries < 3; tries++)
+	{
+		if(read) 
+		{
+			// byte_out command to the DIGITAL_OUTPUT_REGISTER
+			//wait a bit until the motor is up to speed
+			//issue the command byte + parameter bytes to the fifo command io port
+			fdc_byte_out(DATA_FIFO, READ_DATA);
+			fdc_byte_out(DATA_FIFO, head << 2);
+			fdc_byte_out(DATA_FIFO, track);
+			fdc_byte_out(DATA_FIFO, head);
+			fdc_byte_out(DATA_FIFO, sector); //starting sector
+			fdc_byte_out(DATA_FIFO, 2);//something about sector sizes (all use 512bytes, so 2 is the magic number
+			fdc_byte_out(DATA_FIFO, 0x1b); //default gap between sectors
+			fdc_byte_out(DATA_FIFO, 0xff); //something to do with sector sizes	
+			return 0;
+		}
+	}
+
 }
 
-void seek()
-{
-	
-}
-	
 
-void kwrite(int sector, int track, int head, u32 data, u32 count)
-{
-}
-*/
