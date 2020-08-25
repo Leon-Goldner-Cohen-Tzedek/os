@@ -56,7 +56,7 @@ struct dma_profile
 	unsigned char buffer_base_addr;
 	unsigned char transfer_length;
 	unsigned char count_port;
-	unsigned char buffer_phys_addr;
+	unsigned long buffer_phys_addr;
 };
 
 void dma_init(unsigned char mode, unsigned char increment, unsigned char cycle, unsigned char transfer, int channel, struct dma_profile profile);

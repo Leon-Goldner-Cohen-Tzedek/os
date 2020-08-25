@@ -44,7 +44,7 @@
 int disk_init();
 unsigned char fdc_byte_in(unsigned short port);
 int fdc_byte_out(unsigned short port, unsigned char byte);
-void kread_write(int block, unsigned long number_sectors, int read );
+unsigned long kread_write(int block, unsigned long number_sectors, int read );
 void kwrite(int sector, int track, int head, int data, int count);
 void configure(int seek, int fifo, int polling, int threshold);
 void recalibrate();

@@ -38,6 +38,12 @@ void user_input(char* input)
 	{
 		clear_screen();
 	}
+	else if (strcmp(input, "READ") == 0)
+	{
+		unsigned long address = kread_write(1, 4, 1);
+		append(address, "k");
+		kprint(address);
+	}	
 	else if (strcmp(input, "") != 0)
 	{
 		kprint("that is not a valid command");

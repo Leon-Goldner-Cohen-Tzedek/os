@@ -131,13 +131,14 @@ void lba_to_hst(int block, int *head, int *track, int *sector)
    *track = block / (SECTORS_PER_TRACK * /*heads*/ 2);
    *sector = block % SECTORS_PER_TRACK + 1;
 }
-void kread_write(int block, unsigned long number_sectors, int read)
+unsigned long kread_write(int block, unsigned long number_sectors, int read)
 {
 	int head, track, sector, copy_count = 0;
 	
 	lba_to_hst(block, &head, &track, &sector);
 	
 	struct dma_profile dma_profile;	
+dma_init(BLOCK_MODE, ADDRESS_INCREMENT, AUTO_INIT, READ_TRANSFER, 1, dma_profile);
 		//turn on drive motor
 	motor_on();
 
@@ -156,7 +157,7 @@ void kread_write(int block, unsigned long number_sectors, int read)
 			fdc_byte_out(DATA_FIFO, 2);//something about sector sizes (all use 512bytes, so 2 is the magic number
 			fdc_byte_out(DATA_FIFO, 0x1b); //default gap between sectors
 			fdc_byte_out(DATA_FIFO, 0xff); //something to do with sector sizes	
-			return 0;
+			return dma_profile.buffer_phys_addr;
 		}
 	}
 
