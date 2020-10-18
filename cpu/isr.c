@@ -3,6 +3,7 @@
 #include "../libc/strings.h"
 #include "../drivers/screen.h"
 #include "../drivers/keyboard.h"
+#include "../drivers/disk.h"
 #include "ports.h"
 #include "timer.h"
 
@@ -151,6 +152,8 @@ void irq_install()
 	asm volatile("sti");
 	
 	init_timer(50);
-	
+
 	init_keyboard();
+	
+	disk_init();
 }

@@ -5,7 +5,7 @@ OBJ = ${C_SOURCES:.c=.o cpu/interrupt.o}
 
 # Change this if your cross-compiler is somewhere else
 CC = i686-elf-gcc
-GDB = i686-elf-gdb
+GDB = gdb
 # -g: Use debugging symbols in gcc
 CFLAGS = -g -ffreestanding -Wall -Wextra -fno-exceptions -m32
 
@@ -26,9 +26,9 @@ run: clean os-image.bin
 	qemu-system-i386 -fda os-image.bin
 
 # Open the connection to qemu and load our kernel-object file with symbols
-debug: os-image.bin kernel.elf
-	qemu-system-i386 -s -fda os-image.bin -d guest_errors,int &
-	${GDB} -ex "target remote localhost:1234" 
+debug: os-image.bin kernel.elf 
+	qemu-system-i386 -s -S -fda os-image.bin  &
+	${GDB} -ex "target remote localhost:1234" -ex "set architecture i386" -ex "br *0x7c00"
 
 # Generic rules for wildcards
 # To make an object, always compile from its .c

@@ -79,6 +79,7 @@ void clear_fliplop(struct dma_profile profile)
 
 void set_ports(int channel, struct dma_profile profile)
 {
+
 	switch(channel)
 	{//8 bit channels
 		case 0:
